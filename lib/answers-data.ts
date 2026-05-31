@@ -59,7 +59,7 @@ export const SCENARIOS: Scenario[] = [
       rows: [
         { label: "Tax on dividends", direct: "25% held back by the US (claim the rest later)", giftCity: "~15% at the fund level (Ireland route)", directBad: true },
         { label: "Tax on profits", direct: "Taxed in India — 12.5% after 2 years, else your slab", giftCity: "Non-resident: exempt. Resident: same, but simpler" },
-        { label: "If you pass away", direct: "Up to 40% US estate tax above $60,000", giftCity: "₹0 — fund units aren't US assets", directBad: true },
+        { label: "If you pass away", direct: "Up to 40% US estate tax above $60,000", giftCity: "₹0 if the underlying is non-US (Ireland UCITS)", directBad: true },
         { label: "Your tax return", direct: "List every holding in Schedule FA · ₹10L/yr penalty if missed", giftCity: "One domestic fund line", directBad: true },
       ],
     },
@@ -95,7 +95,7 @@ export const SCENARIOS: Scenario[] = [
       "You own an Indian fund unit, not the US stock — so the harshest taxes simply don't reach you.",
     verdictExpert:
       "IFSC fund units are non-US-situs (no US estate tax). Non-residents are exempt under Sec 10(4D); the Ireland feeder cuts dividend WHT to 15%.",
-    big: { value: "$0", caption: "US estate tax — IFSC fund units are not US-situated assets" },
+    big: { value: "$0*", caption: "US estate tax — but only when the fund's underlying isn't US-domiciled (e.g. an Ireland UCITS)" },
     forGlobal:
       "If you're a non-resident, your gains on IFSC fund units are exempt from Indian tax under Section 10(4D) — at any holding period, when settled in foreign currency.",
     forResident:
@@ -103,7 +103,7 @@ export const SCENARIOS: Scenario[] = [
     comparison: {
       title: "What GIFT City removes",
       rows: [
-        { label: "US estate tax", direct: "Up to 40% on US stocks above $60k", giftCity: "₹0 — unit isn't a US asset" },
+        { label: "US estate tax", direct: "Up to 40% on US stocks above $60k", giftCity: "₹0 — if underlying is non-US (Ireland UCITS)" },
         { label: "Dividend drag", direct: "25% (direct US holding)", giftCity: "~15% via the Ireland feeder" },
         { label: "Indian capital gains", direct: "Resident: taxed · Non-resident: taxed on direct foreign assets", giftCity: "Non-resident: exempt (10(4D)) · Resident: taxed, simpler reporting" },
         { label: "Paperwork", direct: "Schedule FA per holding", giftCity: "One fund line" },
@@ -116,7 +116,7 @@ export const SCENARIOS: Scenario[] = [
       "Use Valura's Net Returns tool to see the 10-year difference vs direct.",
     ],
     why: [
-      { p: "Your fund unit isn't a US asset, so US estate tax can't touch it.", e: "US-situs is set by the legal form of the security you own. A unit of an India-domiciled IFSC fund is a non-US security → outside the $60k/40% US estate-tax net, even though the fund holds US stocks." },
+      { p: "The estate-tax saving depends on what the fund actually holds — not on GIFT City itself.", e: "US-situs is set by the underlying asset, not where you invest from. A GIFT City fund whose units feed a non-US (e.g. Ireland UCITS) vehicle is non-US-situs → outside the $60k/40% net. But a GIFT City product holding US stocks or US depository receipts directly STILL carries US estate-tax exposure. The wrapper alone doesn't remove it." },
       { p: "Non-residents pay no Indian tax on these gains.", e: "Section 10(4D) exempts a non-resident's income from transfer of IFSC-fund units, regardless of holding period — valid FY 2025-26 (IFSCA/EY)." },
       { p: "It is not blanket 'tax-free' for everyone.", e: "10(4D) is non-resident-only. Residents still pay Indian capital-gains tax; direct IFSC-exchange/PMS trades are taxed normally. Don't oversell 'tax-free'." },
     ],
