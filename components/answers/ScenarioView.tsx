@@ -48,7 +48,7 @@ export default function ScenarioView({ slug }: { slug: string }) {
         </div>
 
         {/* The big number */}
-        <div className="rounded-2xl p-6 flex items-center gap-5" style={{ background: C.navy }}>
+        <div className="rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-5" style={{ background: C.navy }}>
           <p className="text-4xl sm:text-5xl font-extrabold flex-shrink-0"
             style={{ fontFamily: "var(--font-bricolage)", color: s.accent === "#05A049" ? "#05A049" : "#fff" }}>
             {s.big.value}
