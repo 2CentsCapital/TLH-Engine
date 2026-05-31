@@ -16,7 +16,12 @@ export interface FeederFund {
   sip: boolean;
   exp: number;          // Indian feeder TER %
   uexp: number | null;  // underlying master fund expense %  (null = bundled/NA)
+  factsheet?: string;        // feeder fund factsheet (Google Drive, public)
+  masterFactsheet?: string;  // underlying master fund factsheet (null if same/NA)
 }
+
+/** Build a Google Drive view URL from a file id. */
+const ds = (id: string) => `https://drive.google.com/file/d/${id}/view`;
 
 export interface GiftFund {
   name: string;
@@ -36,18 +41,18 @@ export const NIFTY_TRI = { r1: -4.02, r3: 9.3, r5: 9.63, r10: 12.24 };
 export const ACWI_TRI_SI = 8.37;
 
 export const FEEDER_FUNDS: FeederFund[] = [
-  { name: "Edelweiss US Technology Equity FoF", master: "JPMorgan US Technology Fund", category: "US · Tech", r1: 56.33, r3: 35.09, r5: 19.28, r10: null, lumpsumOpen: false, sip: true, exp: 1.51, uexp: 0.78 },
-  { name: "Edelweiss US Value Equity Offshore Fund", master: "JPMorgan US Value Fund", category: "US · Value", r1: 36.03, r3: 20.54, r5: 14.14, r10: 13.8, lumpsumOpen: false, sip: true, exp: 1.41, uexp: 0.91 },
-  { name: "Edelweiss Greater China Equity Offshore Fund", master: "JPMorgan Greater China Fund", category: "China", r1: 69.73, r3: 25.46, r5: 4.9, r10: 15.05, lumpsumOpen: false, sip: true, exp: 1.51, uexp: 0.75 },
-  { name: "Edelweiss Emerging Markets Opportunities Offshore Fund", master: "JPMorgan Emerging Markets Opportunities Fund", category: "Emerging Mkts", r1: 79.33, r3: 29.64, r5: 10.02, r10: 13, lumpsumOpen: false, sip: true, exp: 1.48, uexp: 0.92 },
-  { name: "Edelweiss Europe Dynamic Equity Offshore Fund", master: "JPMorgan Europe Dynamic Fund", category: "Europe", r1: 30.2, r3: 25.47, r5: 15.47, r10: 13.03, lumpsumOpen: false, sip: true, exp: 1.49, uexp: 0.91 },
-  { name: "Edelweiss ASEAN Equity Offshore Fund", master: "JPMorgan ASEAN Equity Fund", category: "ASEAN", r1: 23.41, r3: 14.14, r5: 9.48, r10: 8.64, lumpsumOpen: false, sip: true, exp: 1.59, uexp: 0.91 },
-  { name: "Franklin US Opportunities Active FoF", master: "Franklin US Opportunities Fund, Class I (Acc)", category: "US · Growth", r1: 30.95, r3: 25.72, r5: 13.8, r10: 17.73, lumpsumOpen: true, sip: true, exp: 0.6, uexp: 0.85 },
-  { name: "PGIM India Global Equity Opportunities Fund", master: "PGIM Jennison Global Equity Opportunities (USD AC I)", category: "Global", r1: 27.77, r3: 20.36, r5: 10.01, r10: 14.67, lumpsumOpen: true, sip: true, exp: 1.44, uexp: null },
-  { name: "PGIM India Emerging Markets Equity Fund", master: "PGIM Jennison Emerging Markets Equity Fund", category: "Emerging Mkts", r1: 62.03, r3: 31.9, r5: 6.28, r10: 7.9, lumpsumOpen: true, sip: true, exp: 1.41, uexp: null },
-  { name: "PGIM India Global Select Real Estate Fund", master: "PGIM Global Select Real Estate Securities Fund", category: "Real Estate", r1: 25.82, r3: 16.39, r5: null, r10: null, lumpsumOpen: true, sip: true, exp: 1.28, uexp: null },
-  { name: "Franklin Asian Equity Fund", master: "Direct Asian stocks (ex-Japan)", category: "Asia ex-Japan", r1: 54.82, r3: 23.07, r5: 7.93, r10: 11.86, lumpsumOpen: true, sip: true, exp: 1.6, uexp: null },
-  { name: "Baroda BNP Paribas Aqua FoF", master: "BNP Paribas Funds SICAV – Aqua", category: "Water / Thematic", r1: 21.13, r3: 16.13, r5: 10.34, r10: null, lumpsumOpen: true, sip: true, exp: 0.61, uexp: null },
+  { name: "Edelweiss US Technology Equity FoF", master: "JPMorgan US Technology Fund", category: "US · Tech", r1: 56.33, r3: 35.09, r5: 19.28, r10: null, lumpsumOpen: false, sip: true, exp: 1.51, uexp: 0.78, factsheet: ds("1wWYPQFNSUyf8iteR1e8Vxap_ZBJQAoZE"), masterFactsheet: ds("1uKHbHY2PPytLMOWNUNfdBdHdwdQG4WiT") },
+  { name: "Edelweiss US Value Equity Offshore Fund", master: "JPMorgan US Value Fund", category: "US · Value", r1: 36.03, r3: 20.54, r5: 14.14, r10: 13.8, lumpsumOpen: false, sip: true, exp: 1.41, uexp: 0.91, factsheet: ds("10aNZQZAj9cr0aHAFgH8yLOjfDNkTcp4P"), masterFactsheet: ds("1srBcMNwliv1eIVsNmJX4WKBd5z6TsgR5") },
+  { name: "Edelweiss Greater China Equity Offshore Fund", master: "JPMorgan Greater China Fund", category: "China", r1: 69.73, r3: 25.46, r5: 4.9, r10: 15.05, lumpsumOpen: false, sip: true, exp: 1.51, uexp: 0.75, factsheet: ds("1LHqOgh1fNYIRgWQvcGEi_FgmdbTuiO0T"), masterFactsheet: ds("19m18pebHvaA_-jxyVYkLojXl6dP3hIR0") },
+  { name: "Edelweiss Emerging Markets Opportunities Offshore Fund", master: "JPMorgan Emerging Markets Opportunities Fund", category: "Emerging Mkts", r1: 79.33, r3: 29.64, r5: 10.02, r10: 13, lumpsumOpen: false, sip: true, exp: 1.48, uexp: 0.92, factsheet: ds("1F5FesjJRZ-aW1puvmIjJ80PEE_w9EBXq"), masterFactsheet: ds("1_bTEGvcnIFMor8m8bt29apkREyx1w55P") },
+  { name: "Edelweiss Europe Dynamic Equity Offshore Fund", master: "JPMorgan Europe Dynamic Fund", category: "Europe", r1: 30.2, r3: 25.47, r5: 15.47, r10: 13.03, lumpsumOpen: false, sip: true, exp: 1.49, uexp: 0.91, factsheet: ds("11LUSxjATl-YTL996TpWcF2eG0WPMxPBd"), masterFactsheet: ds("1gs85T6G8UMyvEj5wlrYG7v37zAuLrbU8") },
+  { name: "Edelweiss ASEAN Equity Offshore Fund", master: "JPMorgan ASEAN Equity Fund", category: "ASEAN", r1: 23.41, r3: 14.14, r5: 9.48, r10: 8.64, lumpsumOpen: false, sip: true, exp: 1.59, uexp: 0.91, factsheet: ds("1ePo70ZpaWXSHFJwzOsR9M2cBG6AkY42L"), masterFactsheet: ds("1hDl22x7Yl2KHLwbssVxe67gT3P2uXq11") },
+  { name: "Franklin US Opportunities Active FoF", master: "Franklin US Opportunities Fund, Class I (Acc)", category: "US · Growth", r1: 30.95, r3: 25.72, r5: 13.8, r10: 17.73, lumpsumOpen: true, sip: true, exp: 0.6, uexp: 0.85, factsheet: ds("1doGRJp_1xI0SZRuZ8sOqGcAGLPxYJOay"), masterFactsheet: ds("1tQ5RP12EH9TbmHWdsK8LR6v3SgZMOrn1") },
+  { name: "PGIM India Global Equity Opportunities Fund", master: "PGIM Jennison Global Equity Opportunities (USD AC I)", category: "Global", r1: 27.77, r3: 20.36, r5: 10.01, r10: 14.67, lumpsumOpen: true, sip: true, exp: 1.44, uexp: null, factsheet: ds("1rSKT1najVnn5HNc35s4DAPTrUUjKDZ6I") },
+  { name: "PGIM India Emerging Markets Equity Fund", master: "PGIM Jennison Emerging Markets Equity Fund", category: "Emerging Mkts", r1: 62.03, r3: 31.9, r5: 6.28, r10: 7.9, lumpsumOpen: true, sip: true, exp: 1.41, uexp: null, factsheet: ds("1LSH37YsKvvdg-Yd310V1Hoywfo8NfNUt") },
+  { name: "PGIM India Global Select Real Estate Fund", master: "PGIM Global Select Real Estate Securities Fund", category: "Real Estate", r1: 25.82, r3: 16.39, r5: null, r10: null, lumpsumOpen: true, sip: true, exp: 1.28, uexp: null, factsheet: ds("18GjLtpNaPf52VSllzqrLCdBB8_1JRxuB") },
+  { name: "Franklin Asian Equity Fund", master: "Direct Asian stocks (ex-Japan)", category: "Asia ex-Japan", r1: 54.82, r3: 23.07, r5: 7.93, r10: 11.86, lumpsumOpen: true, sip: true, exp: 1.6, uexp: null, factsheet: ds("1-wEvQTvc1f3tz3bEmtVxpFh2Qo8HgqPh") },
+  { name: "Baroda BNP Paribas Aqua FoF", master: "BNP Paribas Funds SICAV – Aqua", category: "Water / Thematic", r1: 21.13, r3: 16.13, r5: 10.34, r10: null, lumpsumOpen: true, sip: true, exp: 0.61, uexp: null, factsheet: ds("1oQK_LHmsLCvrV10YLO0yG_CiSAFfEPV3") },
 ];
 
 export const GIFT_FUNDS: GiftFund[] = [

@@ -74,6 +74,9 @@ export default function ScenarioView({ slug }: { slug: string }) {
         {/* Comparison */}
         {s.comparison && <Comparison data={s.comparison} />}
 
+        {/* 3-way comparison */}
+        {s.triComparison && <TriComparison data={s.triComparison} />}
+
         {/* What to do */}
         <div>
           <h2 className="text-base font-bold mb-3" style={{ color: C.navy }}>What to do</h2>
@@ -160,6 +163,54 @@ function Comparison({ data }: { data: NonNullable<Scenario["comparison"]> }) {
           <div className="px-3 py-3 border-l leading-snug" style={{ borderColor: C.border, background: C.greenBg, color: "#256" }}>{r.giftCity}</div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function TriComparison({ data }: { data: NonNullable<Scenario["triComparison"]> }) {
+  const cols = [
+    { key: "direct" as const, label: "Direct stocks" },
+    { key: "feeder" as const, label: "Feeder fund" },
+    { key: "ucits" as const, label: "UCITS ETF" },
+  ];
+  return (
+    <div className="rounded-2xl border overflow-hidden" style={{ borderColor: C.border, background: "#fff" }}>
+      <div className="px-5 py-3 border-b" style={{ borderColor: C.border }}>
+        <h2 className="text-base font-bold" style={{ color: C.navy }}>{data.title}</h2>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-[13px]" style={{ borderCollapse: "collapse", minWidth: 520 }}>
+          <thead>
+            <tr style={{ background: "#F9FAFB" }}>
+              <th className="px-4 py-2.5 text-left text-[11px] font-bold uppercase tracking-wider" style={{ color: C.muted }} />
+              {cols.map((c) => (
+                <th key={c.key} className="px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wider border-l"
+                  style={{ borderColor: C.border, color: c.key === "ucits" ? C.green : C.navy }}>{c.label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.rows.map((r, i) => (
+              <tr key={i} className="border-t" style={{ borderColor: C.border }}>
+                <td className="px-4 py-3 font-semibold" style={{ color: C.navy }}>{r.label}</td>
+                {cols.map((c) => {
+                  const isBest = r.best === c.key;
+                  return (
+                    <td key={c.key} className="px-3 py-3 border-l leading-snug text-center align-top"
+                      style={{ borderColor: C.border, background: isBest ? C.greenBg : "transparent", color: isBest ? "#256" : "#374151", fontWeight: isBest ? 600 : 400 }}>
+                      {r[c.key]}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="px-4 py-2.5 border-t flex items-center gap-1.5 text-[11px]" style={{ borderColor: C.border, color: C.muted }}>
+        <span className="h-2.5 w-2.5 rounded-sm inline-block" style={{ background: C.greenBg, border: `1px solid ${C.greenBorder}` }} />
+        Green = the lowest-cost / lowest-risk option for that row.
+      </div>
     </div>
   );
 }

@@ -4,11 +4,12 @@
  * Numbers are illustrative and labelled as such; the real math lives in the calculators.
  */
 import {
-  Banknote, ShieldCheck, FileText, RefreshCw, Handshake, type LucideIcon,
+  Banknote, ShieldCheck, FileText, RefreshCw, Handshake, Scale, type LucideIcon,
 } from "lucide-react";
 
 export interface WaterfallStep { label: string; amount: string; kind: "start" | "deduct" | "result"; }
 export interface ComparisonRow { label: string; direct: string; giftCity: string; directBad?: boolean; }
+export interface TriRow { label: string; direct: string; feeder: string; ucits: string; best?: "direct" | "feeder" | "ucits"; }
 export interface WhyBullet { p: string; e: string; }
 export interface Citation { label: string; url: string; }
 
@@ -25,6 +26,7 @@ export interface Scenario {
   forGlobal?: string;
   waterfall?: { title: string; note: string; steps: WaterfallStep[] };
   comparison?: { title: string; rows: ComparisonRow[] };
+  triComparison?: { title: string; rows: TriRow[] };
   steps: string[];
   why: WhyBullet[];
   citations: Citation[];
@@ -250,6 +252,54 @@ export const SCENARIOS: Scenario[] = [
     ],
     aiSeed:
       "Explain how the India-US tax treaty (DTAA) affects me as an Indian investor in US stocks — the dividend rate, capital gains, and double-tax relief. How does it change if I invest through GIFT City as an NRI?",
+  },
+
+  /* ─────────── 6. DIRECT vs FEEDER vs UCITS ─────────── */
+  {
+    slug: "direct-vs-feeder-vs-ucits",
+    icon: Scale,
+    category: "Compare vehicles",
+    accent: "#2B4A8A",
+    question: "Direct stocks, a feeder fund, or a UCITS ETF — what's cheapest after tax?",
+    verdictPlain:
+      "All three give you US exposure and are taxed the same on profit. The difference is the yearly fee and the estate-tax risk — and a low-cost Ireland UCITS ETF usually wins on both.",
+    verdictExpert:
+      "Identical capital-gains treatment (Sec 112: 12.5% >24m, slab ≤24m). They diverge on TER (feeder ~1.3–2.3% incl. double layer vs UCITS ~0.07–0.25%), dividend leakage, US-situs estate exposure, and compliance load.",
+    big: { value: "~2.3% → 0.2%", caption: "yearly cost: an Indian feeder fund vs a low-cost Ireland UCITS ETF" },
+    forResident:
+      "Same 12.5% long-term tax on all three — so for a long-term holder, cost and estate-tax risk decide it, not the headline tax rate.",
+    forGlobal:
+      "As a non-resident your IFSC-routed gains may be exempt anyway — so cost and the underlying's domicile matter most.",
+    triComparison: {
+      title: "₹50L of US exposure — three ways",
+      rows: [
+        { label: "Yearly fee", direct: "~0% (just brokerage)", feeder: "1.3–2.3% (feeder + master)", ucits: "0.07–0.25%", best: "ucits" },
+        { label: "Tax on long-term profit", direct: "12.5% (>24m)", feeder: "12.5% (>24m)", ucits: "12.5% (>24m)" },
+        { label: "Tax on short-term profit", direct: "Your slab", feeder: "Your slab", ucits: "Your slab" },
+        { label: "Dividend drag", direct: "25% US WHT (reclaim via Form 67)", feeder: "Handled inside the fund", ucits: "15% inside fund · accumulating = no payout", best: "ucits" },
+        { label: "US estate tax", direct: "Up to 40% (US-situs)", feeder: "Depends on the underlying", ucits: "$0 (non-US asset)", best: "ucits" },
+        { label: "Effort", direct: "US broker · Schedule FA per stock · FX tracking", feeder: "Buy like an Indian mutual fund", ucits: "Offshore / IFSC access", best: "feeder" },
+        { label: "Diversification", direct: "You pick the stocks", feeder: "One theme / region", ucits: "A whole index, cheaply", best: "ucits" },
+      ],
+    },
+    steps: [
+      "For broad US or global exposure, a low-cost accumulating Ireland UCITS ETF is usually cheapest and estate-safe.",
+      "Choose a feeder fund if you value SIPs and Indian onboarding — and accept the double fee.",
+      "Pick direct stocks only for specific names you want — and budget for Schedule FA and estate-tax exposure.",
+      "Remember: the long-term tax is 12.5% either way, so let cost and estate risk be the tie-breaker.",
+    ],
+    why: [
+      { p: "Funds charge a yearly fee; direct stocks don't — but direct means far more tax paperwork.", e: "Feeder funds carry a double TER (feeder + master). Direct holdings mean a Schedule FA line per stock and your own FX accounting (SBI TT rate)." },
+      { p: "All three are taxed the same on the gain — only cost and estate risk differ.", e: "All foreign-equity vehicles fall under Sec 112: 12.5% LTCG after 24 months, STCG at slab (not Sec 112A — no ₹1.25L exemption)." },
+      { p: "Only the non-US fund reliably escapes US estate tax.", e: "US-situs is set by the underlying asset. A direct US stock or a feeder/receipt holding US stock is US-situs; an Ireland UCITS unit is not." },
+    ],
+    citations: [
+      { label: "Paasa — Capital gains on foreign stocks & ETFs", url: "https://paasa.com/blog/capital-gains-tax-foreign-stocks-etfs" },
+      { label: "Paasa — UCITS ETFs for Indian investors", url: "https://paasa.com/blog/what-are-ucits-etfs" },
+      { label: "Paasa — Is GIFT City a replacement for offshore?", url: "https://paasa.com/blog/gift-city-offshore-investing-replacement" },
+    ],
+    aiSeed:
+      "I want long-term US market exposure as a resident Indian. Compare buying US stocks directly vs an Indian feeder fund vs an Ireland UCITS ETF — on yearly cost, tax on gains and dividends, US estate tax, and effort. Which is best and why?",
   },
 ];
 

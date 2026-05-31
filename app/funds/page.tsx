@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   ArrowRight, ArrowUpRight, Check, AlertTriangle, Info, TrendingUp, Layers,
-  Building2, Wallet, ChevronDown,
+  Building2, Wallet, ChevronDown, FileText,
 } from "lucide-react";
 import {
   FEEDER_FUNDS, GIFT_FUNDS, TIER_INFO, FUNDS_AS_OF, NIFTY_TRI, ACWI_TRI_SI,
@@ -55,12 +55,12 @@ export default function FundTrackerPage() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 py-7">
         {tab === "feeder" ? <FeederSection /> : <GiftSection />}
         <TaxPanel />
-        <Link href="/answers/gift-city"
+        <Link href="/answers/direct-vs-feeder-vs-ucits"
           className="mt-6 flex items-center justify-between rounded-2xl p-5 transition-all hover:opacity-95"
           style={{ background: "linear-gradient(135deg,#05A049,#028037)" }}>
           <div>
-            <p className="text-sm font-bold text-white">Not sure which route fits you?</p>
-            <p className="text-xs" style={{ color: "rgba(255,255,255,0.85)" }}>See the plain-English breakdown of GIFT City vs direct — including the estate-tax catch.</p>
+            <p className="text-sm font-bold text-white">Direct stocks vs feeder fund vs UCITS — which is cheapest after tax?</p>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.85)" }}>The plain-English 3-way breakdown — cost, tax, and the estate-tax catch.</p>
           </div>
           <ArrowRight className="h-5 w-5 text-white flex-shrink-0" />
         </Link>
@@ -166,15 +166,28 @@ function FeederCard({ f }: { f: FeederFund }) {
         </div>
       </div>
 
-      {/* Status */}
-      <div className="mt-3 flex items-center gap-2">
+      {/* Status + factsheets */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold"
           style={f.lumpsumOpen ? { background: C.greenBg, color: "#047857" } : { background: C.redBg, color: C.red }}>
           {f.lumpsumOpen ? "Lump-sum open" : "SIP only"}
         </span>
         {f.sip && <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#F1F5F9", color: C.blue }}>SIP available</span>}
+        <span className="flex-1" />
+        {f.factsheet && <FactsheetLink href={f.factsheet} label="Factsheet" />}
+        {f.masterFactsheet && <FactsheetLink href={f.masterFactsheet} label="Master factsheet" />}
       </div>
     </div>
+  );
+}
+
+function FactsheetLink({ href, label }: { href: string; label: string }) {
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors hover:bg-[#F9FAFB]"
+      style={{ borderColor: C.border, color: C.navy }}>
+      <FileText className="h-3 w-3" style={{ color: C.green }} /> {label}
+    </a>
   );
 }
 
