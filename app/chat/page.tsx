@@ -560,6 +560,19 @@ function ChatPageInner() {
     }
   }, [messages, isLoading]);
 
+  // Auto-send a seeded question from a deep link: /chat?ask=<encoded question>
+  const askSent = useRef(false);
+  useEffect(() => {
+    if (askSent.current) return;
+    const ask = searchParams.get("ask");
+    if (ask) {
+      askSent.current = true;
+      const q = decodeURIComponent(ask);
+      // Defer so profile/context effects settle first
+      setTimeout(() => sendMessage(q), 400);
+    }
+  }, [searchParams, sendMessage]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();

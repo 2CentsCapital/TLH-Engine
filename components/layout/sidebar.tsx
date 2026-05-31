@@ -32,8 +32,9 @@ const NAV_SECTIONS = [
   {
     label: "Home",
     items: [
-      { href: "/",     label: "Overview",    icon: Home,      desc: "Calculators & guides" },
-      { href: "/blog", label: "Blog",        icon: Newspaper, desc: "GIFT City knowledge base" },
+      { href: "/",        label: "Overview", icon: Home,        desc: "Calculators & guides" },
+      { href: "/answers", label: "Answers",  icon: Sparkles,    desc: "Plain-English tax guide", badge: "New" },
+      { href: "/blog",    label: "Blog",     icon: Newspaper,   desc: "GIFT City knowledge base" },
     ],
   },
   {
