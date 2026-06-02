@@ -398,6 +398,15 @@ function execGetTaxRates(args: {
 
 // ─── New tool executors ────────────────────────────────────────────────────
 
+/** Indian-style short money format: ₹1.23Cr / ₹4.56L / ₹78K. */
+function fmtL(n: number): string {
+  const a = Math.abs(n);
+  if (a >= 1e7) return `₹${(n / 1e7).toFixed(2)}Cr`;
+  if (a >= 1e5) return `₹${(n / 1e5).toFixed(2)}L`;
+  if (a >= 1e3) return `₹${Math.round(n / 1e3)}K`;
+  return `₹${Math.round(n)}`;
+}
+
 function execRunFYAudit(): Record<string, unknown> {
   const income = bracketToIncome("above_5Cr");
   const summary = getPortfolioSummary();
@@ -449,7 +458,7 @@ function execRunFYAudit(): Record<string, unknown> {
   const urgentActions: string[] = [];
   if (tlhSummary.totalNetBenefit > 0) {
     urgentActions.push(
-      `Harvest TLH losses — save ₹${Math.round(tlhSummary.totalNetBenefit / 1000)}K in tax (${tlhSummary.opportunityCount} positions available)`
+      `Harvest TLH losses — save ${fmtL(tlhSummary.totalNetBenefit)} in tax (${tlhSummary.opportunityCount} positions available)`
     );
   }
   const totalPendingTax = pendingGains.reduce((s, g) => s + g.taxAmount, 0);
@@ -460,7 +469,7 @@ function execRunFYAudit(): Record<string, unknown> {
   }
   if (familyOpt.tcsSavings > 0) {
     urgentActions.push(
-      `Optimize family LRS routing — save ₹${Math.round(familyOpt.tcsSavings / 1000)}K in TCS`
+      `Optimize family LRS routing — save ${fmtL(familyOpt.tcsSavings)} in TCS`
     );
   }
   if (fyDaysLeft < 30) {
@@ -547,8 +556,8 @@ function execCompareScenarios(args: {
     betterScenario,
     savingByChoosingBetterINR: Math.round(savingByChoosingBetter),
     recommendation: betterScenario === "B"
-      ? `Wait for Scenario B — saves ₹${Math.round(savingByChoosingBetter / 1000)}K more in your pocket`
-      : `Sell now (Scenario A) — Scenario B gives ₹${Math.round(savingByChoosingBetter / 1000)}K less`,
+      ? `Wait for Scenario B — saves ${fmtL(savingByChoosingBetter)} more in your pocket`
+      : `Sell now (Scenario A) — Scenario B gives ${fmtL(savingByChoosingBetter)} less`,
   };
 }
 

@@ -45,50 +45,50 @@ const SUGGESTED_PROMPTS = [
   {
     category: "Audit",
     icon: "🔍",
-    prompt: "Audit my full tax position for FY 2025-26 — show me everything I should do.",
-    short: "Full FY audit",
-  },
-  {
-    category: "Urgent",
-    icon: "⏰",
-    prompt: "I have 20 days left in the FY — what should I do urgently before March 31?",
-    short: "March 31 urgency",
-  },
-  {
-    category: "Compare",
-    icon: "⚖️",
-    prompt: "Compare: sell my TATA-SP500 position now (18 months held) vs wait 6 more months for LTCG. Buy $218, current $196, 850 units.",
-    short: "Sell now vs wait",
-  },
-  {
-    category: "Schedule FA",
-    icon: "📋",
-    prompt: "Build my Schedule FA data for GIFT City holdings — I need to file ITR-2.",
-    short: "Schedule FA draft",
-  },
-  {
-    category: "LRS",
-    icon: "👨‍👩‍👧",
-    prompt: "Optimize my LRS remittance of ₹1.2 crore across family members before March 31.",
-    short: "Optimize LRS",
+    prompt: "Run my full FY 2025-26 tax audit and show me everything I should do, ranked by rupee impact.",
+    short: "Run my full tax audit",
   },
   {
     category: "TLH",
     icon: "✂️",
-    prompt: "I'm thinking of selling a position held for 22 months — run the full TLH numbers first.",
-    short: "22-month TLH",
+    prompt: "Scan my portfolio and show me where I can save the most tax right now — give the exact harvesting numbers per position.",
+    short: "Where can I save the most tax?",
   },
   {
-    category: "Advance Tax",
-    icon: "⚡",
-    prompt: "What's my advance tax position and can my LRS TCS credits offset the March 15 installment?",
-    short: "Advance tax offset",
+    category: "Compare",
+    icon: "⚖️",
+    prompt: "Should I sell my TATA-S&P 500 (held 18 months, bought $218, now $196, 850 units) now, or wait 6 months for long-term? Show both side by side.",
+    short: "Sell TATA-S&P 500 now or wait?",
   },
   {
-    category: "Harvest",
-    icon: "🎯",
-    prompt: "Should I harvest my Mirae Global loss position now? Give me the exact tax saving with numbers.",
-    short: "Harvest MIRAE",
+    category: "US stocks",
+    icon: "🇺🇸",
+    prompt: "If I buy ₹50 lakh of US stocks directly, what taxes hit me — dividends, capital gains and US estate tax — versus going through GIFT City?",
+    short: "Tax on buying US stocks direct?",
+  },
+  {
+    category: "Dividends",
+    icon: "💸",
+    prompt: "How are my US dividends taxed, and how do I claim back the 25% the US already withheld? Explain Form 67 simply, with a table.",
+    short: "Get my US dividend tax back",
+  },
+  {
+    category: "LRS",
+    icon: "👨‍👩‍👧",
+    prompt: "Split my ₹1.2 crore overseas remittance across my family so I pay as little TCS as possible. Show the optimal split.",
+    short: "Pay near-zero TCS on ₹1.2 Cr",
+  },
+  {
+    category: "Schedule FA",
+    icon: "📋",
+    prompt: "Build my Schedule FA disclosure for my GIFT City holdings so I can file ITR-2.",
+    short: "Draft my Schedule FA",
+  },
+  {
+    category: "March 31",
+    icon: "⏰",
+    prompt: "What is the single highest-value thing I should do before the financial year ends on March 31?",
+    short: "Best move before March 31",
   },
 ];
 
@@ -623,23 +623,6 @@ function ChatPageInner() {
           </div>
         </div>
 
-        {/* ── Mobile prompt chips (horizontal scroll) ── */}
-        <div className="md:hidden flex-shrink-0 px-3 py-2 border-b border-border overflow-x-auto">
-          <div className="flex gap-2" style={{ width: "max-content" }}>
-            {SUGGESTED_PROMPTS.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => sendMessage(s.prompt)}
-                disabled={isLoading}
-                className="flex-shrink-0 flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium border border-border bg-secondary/20 transition-all hover:border-primary/40 hover:bg-secondary/50 disabled:opacity-40 whitespace-nowrap"
-              >
-                <span>{s.icon}</span>
-                <span className="text-muted-foreground">{s.short}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* ── Messages ── */}
         <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-4 space-y-4">
           {messages.map((msg) => (
@@ -649,8 +632,29 @@ function ChatPageInner() {
           <div ref={messagesEndRef} />
         </div>
 
+        {/* ── Floating quick questions (click to demo) ── */}
+        <div className="flex-shrink-0 px-3 sm:px-4 pt-2.5">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1.5" style={{ scrollbarWidth: "none" }}>
+            <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex-shrink-0 pr-0.5">
+              <Sparkles className="h-3 w-3" style={{ color: "#05A049" }} /> Try
+            </span>
+            {SUGGESTED_PROMPTS.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => sendMessage(s.prompt)}
+                disabled={isLoading}
+                className="flex-shrink-0 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all hover:-translate-y-0.5 disabled:opacity-40 whitespace-nowrap"
+                style={{ background: "#fff", borderColor: "#E5E7EB", color: "#00111B", boxShadow: "0 1px 4px rgba(0,17,27,0.04)" }}
+              >
+                <span>{s.icon}</span>
+                <span>{s.short}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* ── Input ── */}
-        <div className="flex-shrink-0 px-3 sm:px-4 py-3 border-t border-border">
+        <div className="flex-shrink-0 px-3 sm:px-4 pb-3 pt-1 border-t-0">
           <div className="rounded-2xl border border-border bg-card p-2.5 sm:p-3">
             <div className="flex items-end gap-2">
               <textarea
