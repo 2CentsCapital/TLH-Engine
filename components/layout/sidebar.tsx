@@ -25,6 +25,7 @@ import {
   SlidersHorizontal,
   BarChart2,
   Layers,
+  FileText,
 } from "lucide-react";
 import { useProfile } from "@/components/profile/ProfileContext";
 import { BRACKET_LABELS } from "@/lib/user-profile";
@@ -56,6 +57,7 @@ const NAV_SECTIONS = [
     label: "Tools",
     items: [
       { href: "/funds", label: "Fund Tracker", icon: Layers,        desc: "Feeder & GIFT City funds", badge: "New" },
+      { href: "/partner", label: "Partner Suite", icon: FileText,   desc: "Voguestock × Valura docs", badge: "New" },
       { href: "/lrs",  label: "LRS Tracker",  icon: Globe,          desc: "Family remittance tracker" },
       { href: "/tlh",  label: "TLH Engine",   icon: Scissors,       desc: "Tax-loss harvesting", badge: "4 found" },
       { href: "/chat", label: "AI Advisor",   icon: MessageSquare,  desc: "GPT-4o + 6 tools" },
