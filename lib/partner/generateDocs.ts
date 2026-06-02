@@ -5,7 +5,7 @@
 import type { Workbook, Worksheet } from "exceljs";
 import {
   Client, USD_INR, FY_LABEL, FY_START, FY_END,
-  isLongTerm, holdingDays, clientTotals,
+  isLongTerm, holdingDays, clientTotals, quarterOf, type AssetType,
 } from "./clients";
 
 export type DocType = "pnl" | "dividend" | "holdings" | "fsi" | "tr" | "form67";
@@ -141,95 +141,164 @@ function disclaimer(ws: Worksheet, startRow: number, lastCol: number) {
   });
 }
 
+function summaryBand(ws: Worksheet, row: number, lastCol: number, pairs: [string, string][]) {
+  // one merged band of "Label: value   Label: value" chips
+  const colLetter = ws.getColumn(lastCol).letter;
+  ws.mergeCells(`A${row}:${colLetter}${row}`);
+  const cell = ws.getCell(`A${row}`);
+  const rt: { text: string; font: any }[] = [];
+  pairs.forEach(([k, v], i) => {
+    if (i) rt.push({ text: "       ", font: { size: 10 } });
+    rt.push({ text: `${k}: `, font: { size: 10, color: { argb: GREY } } });
+    rt.push({ text: v, font: { size: 11, bold: true, color: { argb: NAVY } } });
+  });
+  cell.value = { richText: rt };
+  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: ORANGE_SOFT } };
+  cell.alignment = { vertical: "middle", indent: 1 };
+  ws.getRow(row).height = 22;
+}
+
+function sectionRow(ws: Worksheet, row: number, lastCol: number, text: string) {
+  const colLetter = ws.getColumn(lastCol).letter;
+  ws.mergeCells(`A${row}:${colLetter}${row}`);
+  const cell = ws.getCell(`A${row}`);
+  cell.value = text;
+  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: NAVY } };
+  cell.font = { bold: true, size: 10, color: { argb: WHITE } };
+  cell.alignment = { vertical: "middle", indent: 1 };
+  ws.getRow(row).height = 20;
+}
+
+const fmtINR = (n: number) => (Math.abs(n) >= 1e7 ? `₹${(n / 1e7).toFixed(2)} Cr` : Math.abs(n) >= 1e5 ? `₹${(n / 1e5).toFixed(2)} L` : `₹${n.toLocaleString("en-IN")}`);
+
 /* ════════════════ document builders ════════════════ */
 
 function buildHoldings(wb: Workbook, c: Client) {
   const ws = wb.addWorksheet("Holdings");
-  ws.columns = [{ width: 30 }, { width: 12 }, { width: 9 }, { width: 9 }, { width: 13 }, { width: 13 }, { width: 16 }, { width: 16 }];
-  brandHeader(ws, 8, "Holdings Statement", "Current global holdings as on 31 Mar 2026 — for Schedule FA reference", c);
-  tableHead(ws, 6, ["Security", "Ticker", "Type", "Qty", "Avg cost (USD)", "Price (USD)", "Value (₹)", "Unrealised P&L (₹)"]);
-  let row = 7;
-  c.holdings.forEach((h, i) => {
-    const valueINR = Math.round(h.curUSD * h.qty * USD_INR);
-    const pnlINR = Math.round((h.curUSD - h.buyUSD) * h.qty * USD_INR);
-    dataRow(ws, row++, [h.security, h.ticker, h.type, h.qty, h.buyUSD, h.curUSD, valueINR, pnlINR], { alt: i % 2 === 1, moneyCols: [6, 7] });
-  });
+  ws.columns = [{ width: 30 }, { width: 11 }, { width: 8 }, { width: 16 }, { width: 8 }, { width: 13 }, { width: 12 }, { width: 14 }, { width: 15 }, { width: 16 }, { width: 11 }, { width: 10 }];
+  const LAST = 12;
+  brandHeader(ws, LAST, "Holdings Statement", "Current global holdings as on 31 Mar 2026 — your Schedule FA reference", c);
   const t = clientTotals(c);
-  totalRow(ws, row++, ["Total", "", "", "", "", "", t.holdingsValueINR, ""], [6, 7]);
-  disclaimer(ws, row + 1, 8);
+  summaryBand(ws, 6, LAST, [["Positions", String(c.holdings.length)], ["Invested", fmtINR(t.holdingsCostINR)], ["Current value", fmtINR(t.holdingsValueINR)], ["Unrealised P&L", fmtINR(t.unrealisedINR)]]);
+  tableHead(ws, 7, ["Security", "Ticker", "Type", "ISIN", "Qty", "Avg cost (USD)", "Price (USD)", "Cost (₹)", "Value (₹)", "Unreal. P&L (₹)", "Unreal. %", "Weight %"]);
+
+  const total = c.holdings.reduce((s, h) => s + h.curUSD * h.qty, 0);
+  let row = 8;
+  const types: AssetType[] = ["Stock", "ETF", "Fund"];
+  for (const type of types) {
+    const group = c.holdings.filter((h) => h.type === type);
+    if (!group.length) continue;
+    sectionRow(ws, row++, LAST, `${type === "Stock" ? "Direct Stocks" : type === "ETF" ? "ETFs" : "Mutual Funds / FoFs"} (${group.length})`);
+    let subVal = 0, subCost = 0, subPnl = 0;
+    group.forEach((h, i) => {
+      const costINR = Math.round(h.buyUSD * h.qty * USD_INR);
+      const valueINR = Math.round(h.curUSD * h.qty * USD_INR);
+      const pnlINR = valueINR - costINR;
+      const pnlPct = ((h.curUSD - h.buyUSD) / h.buyUSD) * 100;
+      const weight = (h.curUSD * h.qty / total) * 100;
+      subVal += valueINR; subCost += costINR; subPnl += pnlINR;
+      dataRow(ws, row++, [h.security, h.ticker, h.type, h.isin, h.qty, h.buyUSD, h.curUSD, costINR, valueINR, pnlINR, `${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(1)}%`, `${weight.toFixed(1)}%`], { alt: i % 2 === 1, moneyCols: [7, 8, 9] });
+    });
+    totalRow(ws, row++, [`${type} subtotal`, "", "", "", "", "", "", subCost, subVal, subPnl, "", ""], [7, 8, 9]);
+  }
+  totalRow(ws, row++, ["GRAND TOTAL", "", "", "", "", "", "", t.holdingsCostINR, t.holdingsValueINR, t.unrealisedINR, "", "100%"], [7, 8, 9]);
+  disclaimer(ws, row + 1, LAST);
 }
 
 function buildPnL(wb: Workbook, c: Client) {
   const ws = wb.addWorksheet("Tax P&L");
-  ws.columns = [{ width: 28 }, { width: 11 }, { width: 8 }, { width: 12 }, { width: 12 }, { width: 11 }, { width: 9 }, { width: 16 }];
-  brandHeader(ws, 8, "Capital Gains — Tax P&L Statement", "Realised gains on foreign securities · STCG ≤ 24m at slab, LTCG > 24m at 12.5%", c);
-  tableHead(ws, 6, ["Security", "Sell date", "Qty", "Buy (USD)", "Sell (USD)", "Hold (days)", "Type", "Gain / Loss (₹)"]);
-  let row = 7;
-  c.sales.forEach((s, i) => {
-    const gainINR = Math.round((s.sellUSD - s.buyUSD) * s.qty * USD_INR);
-    const lt = isLongTerm(s.buyDate, s.sellDate);
-    dataRow(ws, row++, [s.security, s.sellDate, s.qty, s.buyUSD, s.sellUSD, holdingDays(s.buyDate, s.sellDate), lt ? "LTCG" : "STCG", gainINR], { alt: i % 2 === 1, moneyCols: [7] });
-  });
+  ws.columns = [{ width: 28 }, { width: 10 }, { width: 11 }, { width: 11 }, { width: 7 }, { width: 11 }, { width: 11 }, { width: 14 }, { width: 14 }, { width: 15 }, { width: 8 }, { width: 9 }];
+  const LAST = 12;
+  brandHeader(ws, LAST, "Capital Gains — Tax P&L Statement", "Realised gains on foreign securities · STCG ≤ 24m at slab, LTCG > 24m at 12.5%", c);
   const t = clientTotals(c);
-  totalRow(ws, row++, ["Short-term capital gains (STCG)", "", "", "", "", "", "", t.stcgINR], [7]);
-  totalRow(ws, row++, ["Long-term capital gains (LTCG)", "", "", "", "", "", "", t.ltcgINR], [7]);
-  totalRow(ws, row++, ["Net capital gains", "", "", "", "", "", "", t.capGainsINR], [7]);
-  disclaimer(ws, row + 1, 8);
+  summaryBand(ws, 6, LAST, [["Trades", String(c.sales.length)], ["STCG", fmtINR(t.stcgINR)], ["LTCG", fmtINR(t.ltcgINR)], ["Net gains", fmtINR(t.capGainsINR)]]);
+  const head = ["Security", "Ticker", "Buy date", "Sell date", "Qty", "Buy (USD)", "Sell (USD)", "Cost (₹)", "Proceeds (₹)", "Gain / Loss (₹)", "Days", "Type"];
+
+  let row = 7;
+  const render = (lt: boolean, label: string) => {
+    const group = c.sales.filter((s) => isLongTerm(s.buyDate, s.sellDate) === lt);
+    if (!group.length) return;
+    sectionRow(ws, row++, LAST, label);
+    tableHead(ws, row++, head);
+    let sub = 0;
+    group.forEach((s, i) => {
+      const costINR = Math.round(s.buyUSD * s.qty * USD_INR);
+      const procINR = Math.round(s.sellUSD * s.qty * USD_INR);
+      const gainINR = procINR - costINR;
+      sub += gainINR;
+      dataRow(ws, row++, [s.security, s.ticker, s.buyDate, s.sellDate, s.qty, s.buyUSD, s.sellUSD, costINR, procINR, gainINR, holdingDays(s.buyDate, s.sellDate), lt ? "LTCG" : "STCG"], { alt: i % 2 === 1, moneyCols: [7, 8, 9] });
+    });
+    totalRow(ws, row++, [`${lt ? "LTCG" : "STCG"} subtotal`, "", "", "", "", "", "", "", "", sub, "", ""], [9]);
+    ws.getRow(row++).height = 6;
+  };
+  render(false, "Short-Term Capital Gains  ·  taxed at your slab rate");
+  render(true, "Long-Term Capital Gains  ·  taxed at 12.5% (no indexation)");
+  totalRow(ws, row++, ["NET CAPITAL GAINS (STCG + LTCG)", "", "", "", "", "", "", "", "", t.capGainsINR, "", ""], [9]);
+  disclaimer(ws, row + 1, LAST);
 }
 
 function buildDividend(wb: Workbook, c: Client) {
   const ws = wb.addWorksheet("Dividends");
-  ws.columns = [{ width: 30 }, { width: 12 }, { width: 13 }, { width: 14 }, { width: 14 }, { width: 14 }, { width: 14 }];
-  brandHeader(ws, 7, "Dividend Report", "Foreign dividends & US withholding tax (25%) — recover via Form 67 (FTC)", c);
-  tableHead(ws, 6, ["Security", "Pay date", "Gross (USD)", "US tax (USD)", "Gross (₹)", "US tax (₹)", "Net (₹)"]);
-  let row = 7;
-  c.dividends.forEach((d, i) => {
+  ws.columns = [{ width: 30 }, { width: 11 }, { width: 12 }, { width: 15 }, { width: 13 }, { width: 13 }, { width: 14 }, { width: 13 }, { width: 14 }, { width: 9 }];
+  const LAST = 10;
+  brandHeader(ws, LAST, "Dividend Report", "Foreign dividends & US withholding tax (25%) — recover via Form 67 (FTC)", c);
+  const t = clientTotals(c);
+  const paying = c.dividends.filter((d) => d.grossUSD > 0);
+  summaryBand(ws, 6, LAST, [["Payouts", String(paying.length)], ["Gross", fmtINR(t.divGrossINR)], ["US tax withheld", fmtINR(t.usTaxINR)], ["Net received", fmtINR(t.divGrossINR - t.usTaxINR)]]);
+  tableHead(ws, 7, ["Security", "Ticker", "Pay date", "Quarter", "Gross (USD)", "US tax (USD)", "Gross (₹)", "US tax (₹)", "Net (₹)", "Eff. rate"]);
+  let row = 8;
+  paying.forEach((d, i) => {
     const grossINR = Math.round(d.grossUSD * USD_INR);
     const taxINR = Math.round(d.usTaxUSD * USD_INR);
-    dataRow(ws, row++, [d.security, d.date, d.grossUSD, d.usTaxUSD, grossINR, taxINR, grossINR - taxINR], { alt: i % 2 === 1, moneyCols: [4, 5, 6] });
+    const eff = d.grossUSD ? (d.usTaxUSD / d.grossUSD) * 100 : 0;
+    dataRow(ws, row++, [d.security, d.ticker, d.date, quarterOf(d.date), d.grossUSD, d.usTaxUSD, grossINR, taxINR, grossINR - taxINR, `${eff.toFixed(0)}%`], { alt: i % 2 === 1, moneyCols: [6, 7, 8] });
   });
-  const t = clientTotals(c);
-  totalRow(ws, row++, ["Total", "", "", "", t.divGrossINR, t.usTaxINR, t.divGrossINR - t.usTaxINR], [4, 5, 6]);
-  disclaimer(ws, row + 1, 7);
+  totalRow(ws, row++, ["Total", "", "", "", "", "", t.divGrossINR, t.usTaxINR, t.divGrossINR - t.usTaxINR, ""], [6, 7, 8]);
+  disclaimer(ws, row + 1, LAST);
 }
 
 function buildFSI(wb: Workbook, c: Client) {
   const ws = wb.addWorksheet("Schedule FSI");
   ws.columns = [{ width: 8 }, { width: 16 }, { width: 22 }, { width: 8 }, { width: 22 }, { width: 18 }, { width: 16 }, { width: 18 }, { width: 16 }, { width: 14 }];
   brandHeader(ws, 10, "Schedule FSI — Foreign Source Income", "Income from outside India & tax relief (resident Indians only)", c);
-  tableHead(ws, 6, ["Sl.", "Country code", "TIN / Passport", "Sl", "Head of income (a)", "Income outside India ₹ (b)", "Tax paid outside India ₹ (c)", "Tax payable in India ₹ (d)", "Relief ₹ (e=lower of c,d)", "DTAA article"]);
   const t = clientTotals(c);
   const cgTaxIndia = Math.round(t.stcgINR * 0.39 + t.ltcgINR * 0.125); // illustrative
   const divTaxIndia = Math.round(t.divGrossINR * 0.30);
-  dataRow(ws, 7, ["1", "USA – 002", c.usId, "iii", "Capital Gains", t.capGainsINR, 0, cgTaxIndia, 0, "—"], { moneyCols: [5, 6, 7, 8] });
-  dataRow(ws, 8, ["", "", "", "iv", "Other Sources (Dividend)", t.divGrossINR, t.usTaxINR, divTaxIndia, Math.min(t.usTaxINR, divTaxIndia), "10, 25"], { alt: true, moneyCols: [5, 6, 7, 8] });
-  totalRow(ws, 9, ["", "", "", "", "Total", t.capGainsINR + t.divGrossINR, t.usTaxINR, cgTaxIndia + divTaxIndia, Math.min(t.usTaxINR, divTaxIndia), ""], [5, 6, 7, 8]);
-  disclaimer(ws, 11, 10);
+  const reliefD = Math.min(t.usTaxINR, divTaxIndia);
+  summaryBand(ws, 6, 10, [["Country", "USA – 002"], ["Capital gains", fmtINR(t.capGainsINR)], ["Dividends", fmtINR(t.divGrossINR)], ["Foreign tax paid", fmtINR(t.usTaxINR)], ["Relief claimable", fmtINR(reliefD)]]);
+  tableHead(ws, 7, ["Sl.", "Country code", "TIN / Passport", "Sl", "Head of income (a)", "Income outside India ₹ (b)", "Tax paid outside India ₹ (c)", "Tax payable in India ₹ (d)", "Relief ₹ (e=lower of c,d)", "DTAA article"]);
+  dataRow(ws, 8, ["1", "USA – 002", c.usId, "iii", "Capital Gains", t.capGainsINR, 0, cgTaxIndia, 0, "—"], { moneyCols: [5, 6, 7, 8] });
+  dataRow(ws, 9, ["", "", "", "iv", "Other Sources (Dividend)", t.divGrossINR, t.usTaxINR, divTaxIndia, reliefD, "10, 25"], { alt: true, moneyCols: [5, 6, 7, 8] });
+  totalRow(ws, 10, ["", "", "", "", "Total", t.capGainsINR + t.divGrossINR, t.usTaxINR, cgTaxIndia + divTaxIndia, reliefD, ""], [5, 6, 7, 8]);
+  disclaimer(ws, 12, 10);
 }
 
 function buildForm67(wb: Workbook, c: Client) {
   const ws = wb.addWorksheet("Form 67");
   ws.columns = [{ width: 7 }, { width: 16 }, { width: 14 }, { width: 18 }, { width: 16 }, { width: 9 }, { width: 18 }, { width: 16 }, { width: 14 }];
   brandHeader(ws, 9, "Form 67 — Foreign Tax Credit Application", "File before your ITR to claim credit for US tax already paid", c);
-  tableHead(ws, 6, ["Sr", "Country", "Source", "Income outside India ₹", "Tax paid outside ₹", "Rate", "Tax payable in India ₹", "Credit claimed u/s 90 ₹", "DTAA rate"]);
   const t = clientTotals(c);
   const divTaxIndia = Math.round(t.divGrossINR * 0.30);
-  dataRow(ws, 7, ["1", "USA – 002", "Dividend", t.divGrossINR, t.usTaxINR, "25%", divTaxIndia, Math.min(t.usTaxINR, divTaxIndia), "25%"], { moneyCols: [3, 4, 6, 7] });
-  totalRow(ws, 8, ["", "", "Total", t.divGrossINR, t.usTaxINR, "", divTaxIndia, Math.min(t.usTaxINR, divTaxIndia), ""], [3, 4, 6, 7]);
-  disclaimer(ws, 10, 9);
+  const credit = Math.min(t.usTaxINR, divTaxIndia);
+  summaryBand(ws, 6, 9, [["Source", "US Dividends"], ["Income", fmtINR(t.divGrossINR)], ["US tax paid", fmtINR(t.usTaxINR)], ["Credit claimed", fmtINR(credit)]]);
+  tableHead(ws, 7, ["Sr", "Country", "Source", "Income outside India ₹", "Tax paid outside ₹", "Rate", "Tax payable in India ₹", "Credit claimed u/s 90 ₹", "DTAA rate"]);
+  dataRow(ws, 8, ["1", "USA – 002", "Dividend", t.divGrossINR, t.usTaxINR, "25%", divTaxIndia, credit, "25%"], { moneyCols: [3, 4, 6, 7] });
+  totalRow(ws, 9, ["", "", "Total", t.divGrossINR, t.usTaxINR, "", divTaxIndia, credit, ""], [3, 4, 6, 7]);
+  disclaimer(ws, 11, 9);
 }
 
 function buildTR(wb: Workbook, c: Client) {
   const ws = wb.addWorksheet("Schedule TR");
   ws.columns = [{ width: 7 }, { width: 26 }, { width: 24 }, { width: 22 }, { width: 22 }, { width: 16 }];
   brandHeader(ws, 6, "Schedule TR — Summary of Tax Relief", "Total foreign tax paid & relief claimed (links to Schedule FSI)", c);
-  tableHead(ws, 6, ["Sr", "Country code", "TIN / Passport", "Total tax paid outside ₹", "Total relief available ₹", "Relief u/s"]);
   const t = clientTotals(c);
   const divTaxIndia = Math.round(t.divGrossINR * 0.30);
   const relief = Math.min(t.usTaxINR, divTaxIndia);
-  dataRow(ws, 7, ["1", "USA – 002", c.usId, t.usTaxINR, relief, "90"], { moneyCols: [3, 4] });
-  totalRow(ws, 8, ["", "", "Total relief (section 90/90A)", t.usTaxINR, relief, ""], [3, 4]);
-  disclaimer(ws, 10, 6);
+  summaryBand(ws, 6, 6, [["Total foreign tax paid", fmtINR(t.usTaxINR)], ["Relief u/s 90", fmtINR(relief)]]);
+  tableHead(ws, 7, ["Sr", "Country code", "TIN / Passport", "Total tax paid outside ₹", "Total relief available ₹", "Relief u/s"]);
+  dataRow(ws, 8, ["1", "USA – 002", c.usId, t.usTaxINR, relief, "90"], { moneyCols: [3, 4] });
+  totalRow(ws, 9, ["", "", "Total relief (section 90/90A)", t.usTaxINR, relief, ""], [3, 4]);
+  disclaimer(ws, 11, 6);
 }
 
 const BUILDERS: Record<DocType, (wb: Workbook, c: Client) => void> = {
