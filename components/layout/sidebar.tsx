@@ -36,6 +36,7 @@ const NAV_SECTIONS = [
     items: [
       { href: "/",        label: "Overview", icon: Home,        desc: "Calculators & guides" },
       { href: "/magic",   label: "Magic Demo", icon: Sparkles,  desc: "Cinematic walkthrough", badge: "New" },
+      { href: "/narnolia", label: "Narnolia Show", icon: Sparkles, desc: "UCITS → tax-solved demo", badge: "Live" },
       { href: "/answers", label: "Answers",  icon: BookOpen,    desc: "Plain-English tax guide", badge: "New" },
       { href: "/blog",    label: "Blog",     icon: Newspaper,   desc: "GIFT City knowledge base" },
     ],
