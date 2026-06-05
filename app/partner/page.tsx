@@ -9,6 +9,9 @@ import {
 } from "lucide-react";
 import { CLIENTS, clientTotals, type Client } from "@/lib/partner/clients";
 import { generateDoc, generateAll, type DocType } from "@/lib/partner/generateDocs";
+import { usePartner, soft, border as bd, type Partner } from "@/lib/partner-brand";
+import { CoBrand, PartnerMark } from "@/components/partner/CoBrand";
+import BrandSwitcher from "@/components/partner/BrandSwitcher";
 
 const C = {
   navy: "#00111B", green: "#05A049", greenBg: "#EDFAF3", greenBorder: "#B4E3C8",
@@ -98,6 +101,8 @@ export default function PartnerPage() {
   const [client, setClient] = useState<Client>(CLIENTS[0]);
   const [busy, setBusy] = useState<string | null>(null);
   const [bookOpen, setBookOpen] = useState(false);
+  const partner = usePartner();
+  const brand = partner.color;
   const t = clientTotals(client);
 
   const dl = async (type: DocType) => {
@@ -114,11 +119,10 @@ export default function PartnerPage() {
       {/* Co-branded hero */}
       <section style={{ background: C.navy }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 md:px-8 pt-9 pb-10">
-          <div className="flex items-center gap-3 mb-5">
-            <span className="text-2xl font-extrabold italic" style={{ fontFamily: "var(--font-bricolage)", color: C.orange }}>Voguestock</span>
-            <span className="text-xl font-light text-white/40">×</span>
-            <span className="text-2xl font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.green }}>Valura</span>
-            <span className="ml-2 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest" style={{ background: "rgba(5,160,73,0.18)", color: "#7BE2A8" }}>Partner tax suite</span>
+          <div className="flex items-center gap-3 mb-5 flex-wrap">
+            <CoBrand partner={partner} size={26} />
+            <span className="rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest" style={{ background: "rgba(5,160,73,0.18)", color: "#7BE2A8" }}>Partner tax suite</span>
+            <span className="ml-auto"><BrandSwitcher /></span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white max-w-2xl" style={{ fontFamily: "var(--font-bricolage)" }}>
             Your clients' global-tax paperwork — done for them.
@@ -161,7 +165,7 @@ export default function PartnerPage() {
 
         {/* Client summary strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Stat label="Holdings value" value={inr(t.holdingsValueINR)} accent={C.orange} />
+          <Stat label="Holdings value" value={inr(t.holdingsValueINR)} accent={brand} />
           <Stat label="Capital gains (FY)" value={inr(t.capGainsINR)} accent={C.green} />
           <Stat label="Dividends (gross)" value={inr(t.divGrossINR)} accent="#2B4A8A" />
           <Stat label="US tax to reclaim" value={inr(t.usTaxINR)} accent="#7A2020" />
@@ -198,7 +202,7 @@ export default function PartnerPage() {
             ))}
           </div>
           <p className="mt-3 flex items-center gap-1.5 text-[11px]" style={{ color: C.muted }}>
-            <Sparkles className="h-3.5 w-3.5" style={{ color: C.green }} /> Generated live for <b style={{ color: C.navy }}>&nbsp;{client.name}</b> — co-branded Voguestock × Valura, ITR-formatted, illustrative.
+            <Sparkles className="h-3.5 w-3.5" style={{ color: C.green }} /> Generated live for <b style={{ color: C.navy }}>&nbsp;{client.name}</b> — co-branded {partner.name} × Valura, ITR-formatted, illustrative.
           </p>
         </div>
 
@@ -230,7 +234,7 @@ export default function PartnerPage() {
                 </div>
                 <p className="text-[13px] leading-relaxed mb-4" style={{ color: "#33514a" }}>
                   A vetted chartered accountant reviews these exact documents, files Form 67, and signs off the return.
-                  Voguestock clients get priority slots.
+                  {partner.name} clients get priority slots.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {["Schedule FA review", "Form 67 filing", "ITR-2 / ITR-3", "Estate-tax planning"].map((x) => (
@@ -273,23 +277,23 @@ export default function PartnerPage() {
 
         {/* End-to-end banner */}
         <div className="rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-          style={{ background: C.orangeBg, border: `1px solid ${C.orangeBorder}` }}>
+          style={{ background: soft(brand), border: `1px solid ${bd(brand)}` }}>
           <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 flex-shrink-0" style={{ color: C.orange }} />
+            <Sparkles className="h-5 w-5 flex-shrink-0" style={{ color: brand }} />
             <p className="text-sm" style={{ color: C.navy }}>
-              <b>End-to-end:</b> Voguestock gives your clients the trades — Valura turns them into filed, CA-signed tax returns.
+              <b>End-to-end:</b> {partner.name} gives your clients the trades — Valura turns them into filed, CA-signed tax returns.
             </p>
           </div>
         </div>
       </div>
 
-      {bookOpen && <BookingModal client={client} onClose={() => setBookOpen(false)} />}
+      {bookOpen && <BookingModal client={client} partner={partner} onClose={() => setBookOpen(false)} />}
     </div>
   );
 }
 
 /* ════════════════ CA booking modal ════════════════ */
-function BookingModal({ client, onClose }: { client: Client; onClose: () => void }) {
+function BookingModal({ client, partner, onClose }: { client: Client; partner: Partner; onClose: () => void }) {
   const [caId, setCaId] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [mode, setMode] = useState<"video" | "phone">("video");
@@ -320,7 +324,7 @@ function BookingModal({ client, onClose }: { client: Client; onClose: () => void
           style={{ background: "#fff", borderColor: C.border }}>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-extrabold italic" style={{ fontFamily: "var(--font-bricolage)", color: C.orange }}>Voguestock</span>
+              <PartnerMark partner={partner} size={14} />
               <span className="text-xs text-gray-400">×</span>
               <span className="text-sm font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.green }}>Valura</span>
               <span className="text-sm font-bold" style={{ color: C.navy }}>· CA Desk</span>

@@ -7,8 +7,11 @@ import type { Workbook, Worksheet } from "exceljs";
 import {
   SHOW, SHOW_CLIENT, SHOW_FUND, computeShow, inrShort, FILING_CHECKLIST, USD_INR,
 } from "@/lib/showcase-data";
+import { getActivePartner, hexToArgb } from "@/lib/partner-brand";
 
-const RED = "FFE0822E";       // Voguestock (orange)
+const PA = () => getActivePartner();
+const fundFull = () => `${PA().name} ${SHOW_FUND.name}`;
+const RED = "FFE0822E";       // partner brand (fallback)
 const GREEN = "FF05A049";     // Valura
 const NAVY = "FF00111B";
 const GREEN_SOFT = "FFEDFAF3";
@@ -30,7 +33,7 @@ function banner(ws: Worksheet, last: number, title: string, sub: string) {
   const b = ws.getCell("A1");
   b.value = {
     richText: [
-      { text: "Voguestock", font: { bold: true, size: 18, color: { argb: RED } } },
+      { text: PA().name, font: { bold: true, size: 18, color: { argb: hexToArgb(PA().color) } } },
       { text: "  ×  ", font: { bold: true, size: 16, color: { argb: WHITE } } },
       { text: "Valura", font: { bold: true, size: 18, color: { argb: GREEN } } },
     ],
@@ -109,7 +112,7 @@ function row(ws: Worksheet, r: number, vals: (string | number)[], opts?: { alt?:
 function disclaimer(ws: Worksheet, start: number, last: number) {
   const L = ws.getColumn(last).letter;
   const lines = [
-    "Illustrative co-branded report — Voguestock × Valura.",
+    `Illustrative co-branded report — ${PA().name} × Valura.`,
     "USD→INR at the SBI TT buying rate. Tax rules per Finance Act 2025 (FY 2025-26). Confirm with your CA before filing.",
   ];
   lines.forEach((l, i) => {
@@ -127,7 +130,7 @@ function tabSummary(wb: Workbook) {
   banner(ws, 2, "Foreign Income & Tax Report", "From purchase to filed return — your global investment, tax-solved.");
 
   section(ws, 6, 2, "The investment");
-  kv(ws, 7, "Fund", SHOW_FUND.name);
+  kv(ws, 7, "Fund", fundFull());
   kv(ws, 8, "ISIN / domicile", `${SHOW_FUND.isin} · ${SHOW_FUND.domicile}`);
   kv(ws, 9, "Structure", `${SHOW_FUND.structure} · TER ${SHOW_FUND.ter}%`);
   kv(ws, 10, "Invested", SHOW.investINR, { money: true });
@@ -166,7 +169,7 @@ function tabCapitalGains(wb: Workbook) {
   const m = computeShow();
   const ws = wb.addWorksheet("Capital Gains");
   ws.columns = [{ width: 30 }, { width: 14 }, { width: 14 }, { width: 12 }, { width: 14 }, { width: 16 }, { width: 16 }, { width: 16 }];
-  banner(ws, 8, "Capital Gains — Tax P&L", "Realised gain on the Voguestock UCITS redemption · LTCG > 24 months at 12.5%");
+  banner(ws, 8, "Capital Gains — Tax P&L", `Realised gain on the ${PA().name} UCITS redemption · LTCG > 24 months at 12.5%`);
   head(ws, 6, ["Security", "Buy date", "Sell date", "Units", "Cost ₹", "Proceeds ₹", "Gain ₹", "Type"]);
   row(ws, 7, [SHOW_FUND.short, SHOW.buyDate, SHOW.sellDate, m.units, SHOW.investINR, m.proceedsINR, m.gainINR, "LTCG"], { money: [4, 5, 6] });
   section(ws, 9, 8, "Tax computation");
@@ -185,7 +188,7 @@ function tabScheduleFA(wb: Workbook) {
   banner(ws, 8, "Schedule FA — Foreign Assets", "Mandatory disclosure of the foreign holding · no minimum threshold");
   head(ws, 6, ["Sl.", "Country", "Entity & ISIN", "Acquired on", "Initial cost ₹", "Peak value ₹", "Closing value ₹", "Proceeds on sale ₹"]);
   const peak = Math.round(m.proceedsINR * 1.05);
-  row(ws, 7, ["1", "Ireland – 105", `${SHOW_FUND.name} (${SHOW_FUND.isin})`, SHOW.buyDate, SHOW.investINR, peak, 0, m.proceedsINR], { money: [4, 5, 6, 7] });
+  row(ws, 7, ["1", "Ireland – 105", `${fundFull()} (${SHOW_FUND.isin})`, SHOW.buyDate, SHOW.investINR, peak, 0, m.proceedsINR], { money: [4, 5, 6, 7] });
   ws.getRow(9).height = 4;
   ws.mergeCells("A10:H10");
   const note = ws.getCell("A10");
@@ -231,7 +234,7 @@ function tabChecklist(wb: Workbook) {
 export async function generateShowcaseReport() {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
-  wb.creator = "Voguestock × Valura";
+  wb.creator = `${PA().name} × Valura`;
   tabSummary(wb);
   tabCapitalGains(wb);
   tabScheduleFA(wb);
@@ -242,7 +245,7 @@ export async function generateShowcaseReport() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `Voguestock-Valura_Foreign-Income-Tax-Report_${SHOW_CLIENT.name.replace(/\s+/g, "-")}_FY25-26.xlsx`;
+  a.download = `${PA().name.replace(/\s+/g, "")}-Valura_Foreign-Income-Tax-Report_${SHOW_CLIENT.name.replace(/\s+/g, "-")}_FY25-26.xlsx`;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 }

@@ -6,6 +6,8 @@ import {
   SHOW, SHOW_CLIENT, SHOW_FUND, computeShow, inrShort, FILING_CHECKLIST,
 } from "@/lib/showcase-data";
 import { generateShowcaseReport } from "@/lib/partner/showcaseReport";
+import { usePartner } from "@/lib/partner-brand";
+import { CoBrand } from "@/components/partner/CoBrand";
 
 const C = {
   red: "#E0822E", green: "#05A049", navy: "#00111B", muted: "#6b7280",
@@ -37,6 +39,7 @@ function growthPath(w: number, h: number) {
 }
 
 export default function VoguestockReport() {
+  const partner = usePartner();
   const W = 380, H = 120;
   const g = growthPath(W, H);
 
@@ -47,7 +50,7 @@ export default function VoguestockReport() {
         <Link href="/voguestock" className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold bg-white shadow-md" style={{ color: C.navy, border: `1px solid ${C.border}` }}>
           <ArrowLeft className="h-3.5 w-3.5" /> Back
         </Link>
-        <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold text-white shadow-md" style={{ background: `linear-gradient(135deg, ${C.red}, #C26A1E)` }}>
+        <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold text-white shadow-md" style={{ background: `linear-gradient(135deg, ${partner.color}, ${partner.colorDark})` }}>
           <Download className="h-3.5 w-3.5" /> Download PDF
         </button>
         <button onClick={() => generateShowcaseReport()} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold bg-white shadow-md" style={{ color: C.navy, border: `1px solid ${C.border}` }}>
@@ -58,16 +61,12 @@ export default function VoguestockReport() {
       {/* The sheet */}
       <div className="print-sheet mx-auto max-w-[820px] bg-white rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.border}`, boxShadow: "0 24px 70px rgba(0,17,27,0.10)" }}>
         {/* accent bar */}
-        <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${C.red}, ${C.green})` }} />
+        <div className="h-1.5" style={{ background: `linear-gradient(90deg, ${partner.color}, ${C.green})` }} />
 
         <div className="p-7 sm:p-10">
           {/* header */}
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.red }}>Voguestock</span>
-              <span className="text-base text-gray-300">×</span>
-              <span className="text-xl font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.green }}>Valura</span>
-            </div>
+            <CoBrand partner={partner} size={20} />
             <div className="text-right">
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: C.green }}>Foreign Income & Tax Report</p>
               <p className="text-[11px]" style={{ color: C.muted }}>FY 2025-26 · as on 31 Mar 2026</p>
@@ -118,7 +117,7 @@ export default function VoguestockReport() {
           {/* investment + tax cards */}
           <div className="mt-7 grid grid-cols-1 sm:grid-cols-2 gap-4 print-avoid-break">
             <Panel title="The investment" icon={Globe2}>
-              <Row k="Fund" v={SHOW_FUND.name} />
+              <Row k="Fund" v={`${partner.name} ${SHOW_FUND.name}`} />
               <Row k="ISIN" v={SHOW_FUND.isin} />
               <Row k="Domicile" v={SHOW_FUND.domicile} />
               <Row k="Structure" v={`${SHOW_FUND.structure} · TER ${SHOW_FUND.ter}%`} />
@@ -128,7 +127,7 @@ export default function VoguestockReport() {
             <Panel title="The tax — solved" icon={ShieldCheck}>
               <Row k="Capital gain" v={inrShort(m.gainINR)} accent={C.green} />
               <Row k="Tax type / rate" v={`LTCG · ${m.effRatePct.toFixed(2)}%`} />
-              <Row k="Capital gains tax" v={inrShort(m.taxINR)} accent={C.red} />
+              <Row k="Capital gains tax" v={inrShort(m.taxINR)} accent="#DC2626" />
               <Row k="Indian dividend tax" v="₹0" accent={C.green} />
               <Row k="US estate tax" v="$0" accent={C.green} />
               <Row k="Net after tax" v={inrShort(m.netINR)} accent={C.navy} bold />
@@ -178,7 +177,7 @@ export default function VoguestockReport() {
               Illustrative co-branded report · USD→INR at the SBI TT buying rate · Tax rules per Finance Act 2025 (FY 2025-26) · Confirm with your CA before filing.
             </p>
             <p className="text-[10px] font-semibold flex-shrink-0" style={{ color: C.navy }}>
-              Prepared by <span style={{ color: C.red }}>Voguestock</span> × <span style={{ color: C.green }}>Valura</span>
+              Prepared by <span style={{ color: partner.color }}>{partner.name}</span> × <span style={{ color: C.green }}>Valura</span>
             </p>
           </div>
         </div>

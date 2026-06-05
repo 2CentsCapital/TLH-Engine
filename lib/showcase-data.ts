@@ -14,8 +14,8 @@ export const SHOW_CLIENT = {
 };
 
 export const SHOW_FUND = {
-  name: "Voguestock Global Equity UCITS Fund",
-  short: "Voguestock Global Equity",
+  name: "Global Equity UCITS Fund",   // partner name is prepended in the UI
+  short: "Global Equity UCITS",
   isin: "IE00BNAR0L12",
   domicile: "Ireland (UCITS)",
   structure: "Accumulating",

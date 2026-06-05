@@ -10,6 +10,8 @@ import {
   SHOW, SHOW_CLIENT, SHOW_FUND, computeShow, inrShort, FILING_CHECKLIST,
 } from "@/lib/showcase-data";
 import { generateShowcaseReport } from "@/lib/partner/showcaseReport";
+import { usePartner, type Partner } from "@/lib/partner-brand";
+import { CoBrand } from "@/components/partner/CoBrand";
 
 const C = {
   red: "#E0822E", green: "#05A049", navy: "#00111B", mint: "#B4E3C8",
@@ -22,19 +24,21 @@ const m = computeShow();
 type FocusId = "title" | "client" | "fund" | "bought" | "time" | "tax" | "reports" | "close";
 interface Step { kicker: string; title: string; sub: string; focus: FocusId; }
 
-const STEPS: Step[] = [
-  { kicker: "Voguestock × Valura · Live", title: "Global investing. Fully tax-solved.", sub: "Watch one client go from buying a global fund to a filed, optimised return — in 90 seconds.", focus: "title" },
+const makeSteps = (b: string): Step[] => [
+  { kicker: `${b} × Valura · Live`, title: "Global investing. Fully tax-solved.", sub: "Watch one client go from buying a global fund to a filed, optimised return — in 90 seconds.", focus: "title" },
   { kicker: "Step 1 · Onboard the client", title: "Meet Aarav.", sub: "A resident Indian with ₹50 lakh to put to work globally.", focus: "client" },
-  { kicker: "Step 2 · The Voguestock UCITS fund", title: "One fund. Every tax problem, pre-solved.", sub: "Ireland-domiciled and accumulating — the structure quietly does the work.", focus: "fund" },
+  { kicker: `Step 2 · The ${b} UCITS fund`, title: "One fund. Every tax problem, pre-solved.", sub: "Ireland-domiciled and accumulating — the structure quietly does the work.", focus: "fund" },
   { kicker: "Step 2 · Order confirmed", title: "Bought.", sub: `${m.units.toLocaleString("en-IN")} units allotted at $${SHOW.navBuyUSD}. ₹50,00,000 deployed.`, focus: "bought" },
   { kicker: "Step 3 · Time passes", title: "26 months later…", sub: "Markets compound. Dividends quietly reinvest inside the fund — taxed at 0% in India.", focus: "time" },
   { kicker: "Step 4 · The taxable event", title: "Aarav redeems. Now — the tax.", sub: "This is where most tools panic. Watch it get solved.", focus: "tax" },
-  { kicker: "Step 5 · The filings", title: "Every report — generated. Done.", sub: "Co-branded Voguestock × Valura, ITR-ready, in one click.", focus: "reports" },
-  { kicker: "Voguestock × Valura", title: "Access from Voguestock. Tax solved by Valura.", sub: "From the buy order to the filed return — end to end.", focus: "close" },
+  { kicker: "Step 5 · The filings", title: "Every report — generated. Done.", sub: `Co-branded ${b} × Valura, ITR-ready, in one click.`, focus: "reports" },
+  { kicker: `${b} × Valura`, title: `Access from ${b}. Tax solved by Valura.`, sub: "From the buy order to the filed return — end to end.", focus: "close" },
 ];
 
 export default function VoguestockShow() {
   const router = useRouter();
+  const partner = usePartner();
+  const STEPS = makeSteps(partner.name);
   const [step, setStep] = useState(0);
   const total = STEPS.length;
   const scene = STEPS[step];
@@ -62,11 +66,7 @@ export default function VoguestockShow() {
 
       {/* top bar */}
       <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-5 sm:px-8 py-4">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.red }}>Voguestock</span>
-          <span className="text-sm text-gray-300">×</span>
-          <span className="text-base font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.green }}>Valura</span>
-        </div>
+        <CoBrand partner={partner} size={16} />
         <div className="flex items-center gap-4">
           <span className="text-[11px] tabular-nums" style={{ color: C.muted }}>{step + 1} / {total}</span>
           <button onClick={exit} aria-label="Exit" className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100" style={{ color: C.muted }}><X className="h-4 w-4" /></button>
@@ -82,7 +82,7 @@ export default function VoguestockShow() {
         <h1 className="magic-rise max-w-3xl text-3xl sm:text-5xl font-extrabold leading-[1.08] tracking-tight mb-3" style={{ fontFamily: "var(--font-bricolage)", color: C.navy, animationDelay: "0.12s" }}>{scene.title}</h1>
         <p className="magic-rise max-w-xl text-sm sm:text-base leading-relaxed mb-8" style={{ color: C.muted, animationDelay: "0.2s" }}>{scene.sub}</p>
         <div className="magic-rise w-full flex justify-center" style={{ animationDelay: "0.3s" }}>
-          <Focus id={scene.focus} onBuy={next} onReplay={() => setStep(0)} onExit={exit} />
+          <Focus id={scene.focus} partner={partner} onBuy={next} onReplay={() => setStep(0)} onExit={exit} />
         </div>
       </div>
 
@@ -106,15 +106,13 @@ export default function VoguestockShow() {
 }
 
 /* ───── focal content ───── */
-function Focus({ id, onBuy, onReplay, onExit }: { id: FocusId; onBuy: () => void; onReplay: () => void; onExit: () => void }) {
+function Focus({ id, partner, onBuy, onReplay, onExit }: { id: FocusId; partner: Partner; onBuy: () => void; onReplay: () => void; onExit: () => void }) {
   switch (id) {
     case "title":
       return (
         <Card glow>
-          <div className="flex items-center gap-3 justify-center">
-            <span className="text-2xl font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.red }}>Voguestock</span>
-            <span className="text-lg text-gray-300">×</span>
-            <span className="text-2xl font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.green }}>Valura</span>
+          <div className="flex items-center justify-center">
+            <CoBrand partner={partner} size={24} />
           </div>
           <p className="mt-3 text-xs" style={{ color: C.muted }}>Press <b style={{ color: C.navy }}>Next →</b> to begin the journey</p>
         </Card>
@@ -142,7 +140,7 @@ function Focus({ id, onBuy, onReplay, onExit }: { id: FocusId; onBuy: () => void
         <Card wide glow>
           <div className="flex items-start justify-between">
             <div className="text-left">
-              <p className="text-base font-bold" style={{ color: C.navy }}>{SHOW_FUND.name}</p>
+              <p className="text-base font-bold" style={{ color: C.navy }}>{partner.name} {SHOW_FUND.name}</p>
               <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>{SHOW_FUND.isin} · {SHOW_FUND.domicile} · {SHOW_FUND.structure} · TER {SHOW_FUND.ter}%</p>
             </div>
             <Globe2 className="h-6 w-6 flex-shrink-0" style={{ color: C.green }} />
@@ -204,7 +202,7 @@ function Focus({ id, onBuy, onReplay, onExit }: { id: FocusId; onBuy: () => void
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 magic-stagger" style={{ maxWidth: 560 }}>
           <TaxCard label="Capital gain" value={inrShort(m.gainINR)} sub="held 26 months → long-term" color={C.navy} />
-          <TaxCard label={`LTCG tax @ ${m.effRatePct.toFixed(2)}%`} value={inrShort(m.taxINR)} sub="12.5% + surcharge + cess" color={C.red} />
+          <TaxCard label={`LTCG tax @ ${m.effRatePct.toFixed(2)}%`} value={inrShort(m.taxINR)} sub="12.5% + surcharge + cess" color="#DC2626" />
           <TaxCard label="Dividend tax in India" value="₹0" sub="accumulating — nothing to declare" color={C.green} />
           <TaxCard label="US estate tax" value="$0" sub="Irish unit — non-US asset" color={C.green} />
           <div className="sm:col-span-2 rounded-2xl p-4 flex items-center justify-between" style={{ background: C.navy }}>
@@ -215,16 +213,12 @@ function Focus({ id, onBuy, onReplay, onExit }: { id: FocusId; onBuy: () => void
       );
 
     case "reports":
-      return <ReportsFocus />;
+      return <ReportsFocus partner={partner} />;
 
     case "close":
       return (
         <div className="flex flex-col items-center gap-5">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.red }}>Voguestock</span>
-            <span className="text-xl text-gray-300">×</span>
-            <span className="text-3xl font-extrabold" style={{ fontFamily: "var(--font-bricolage)", color: C.green }}>Valura</span>
-          </div>
+          <CoBrand partner={partner} size={30} />
           <div className="flex flex-wrap items-center justify-center gap-3">
             <button onClick={onExit} className="flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition-all hover:opacity-95" style={{ background: `linear-gradient(135deg, ${C.green}, #028037)` }}>Open the partner suite <ArrowRight className="h-4 w-4" /></button>
             <button onClick={onReplay} className="flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all hover:bg-gray-50" style={{ color: C.navy, border: `1px solid ${C.border}` }}><RotateCcw className="h-4 w-4" /> Replay</button>
@@ -234,7 +228,7 @@ function Focus({ id, onBuy, onReplay, onExit }: { id: FocusId; onBuy: () => void
   }
 }
 
-function ReportsFocus() {
+function ReportsFocus({ partner }: { partner: Partner }) {
   const [busy, setBusy] = useState(false);
   const dl = async () => { setBusy(true); try { await generateShowcaseReport(); } finally { setBusy(false); } };
   return (
@@ -251,7 +245,7 @@ function ReportsFocus() {
           );
         })}
       </div>
-      <a href="/voguestock/report" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all hover:opacity-95" style={{ background: `linear-gradient(135deg, ${C.red}, #C26A1E)` }}>
+      <a href="/voguestock/report" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-all hover:opacity-95" style={{ background: `linear-gradient(135deg, ${partner.color}, ${partner.colorDark})` }}>
         <FileText className="h-4 w-4" /> Open the beautiful report →
       </a>
       <button onClick={dl} disabled={busy} className="mt-2 w-full inline-flex items-center justify-center gap-1.5 text-[11px] font-semibold disabled:opacity-60" style={{ color: C.muted }}>
